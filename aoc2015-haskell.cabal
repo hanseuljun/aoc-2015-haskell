@@ -89,3 +89,8 @@ executable day4-1
     main-is:          day4-1.hs
     hs-source-dirs:   .
     build-depends:    base ^>=4.21.0.0, bytestring, cryptonite, pureMD5
+
+executable day4-2
+    main-is:          day4-2.hs
+    hs-source-dirs:   .
+    build-depends:    base ^>=4.21.0.0, bytestring, cryptonite, pureMD5
