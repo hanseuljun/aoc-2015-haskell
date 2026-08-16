@@ -85,7 +85,7 @@ executable day2-2
     hs-source-dirs:   .
     build-depends:    base ^>=4.21.0.0, split
 
-executable day3-1
-    main-is:          day3-1.hs
+executable day4-1
+    main-is:          day4-1.hs
     hs-source-dirs:   .
-    build-depends:    base ^>=4.21.0.0
+    build-depends:    base ^>=4.21.0.0, bytestring, cryptonite, pureMD5
