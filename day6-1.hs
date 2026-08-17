@@ -45,6 +45,10 @@ runAction :: STArray s (Int, Int) Bool -> Action -> ST s ()
 runAction arr action = do
   case typeOf action of
     TurnOn -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray arr c True)
+    TurnOff -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray arr c False)
+    Toggle -> runFromStartToEnd (startOf action) (endOf action) (\c -> do
+                                                                    v <- readArray arr c
+                                                                    writeArray arr c (not v))
 
 createGrid :: [Action] -> Array (Int, Int) Bool
 createGrid actions = runSTArray $ do
@@ -55,13 +59,14 @@ createGrid actions = runSTArray $ do
 main :: IO ()
 main = do
   -- content <- readFile "input6.txt"
-  -- let actionLines = lines content
-  --     actionLine = actionLines !! 0
-  let actionLine = "turn on 1,1 through 2,2"
-      action = parseActionLine actionLine
-  print actionLine
-  print action
+  let content = "turn on 1,1 through 2,2\ntoggle 1,1 through 3,3"
+  let actionLines = lines content
+      actions = map parseActionLine actionLines
+      action = actions !! 0
+  print actionLines
+  print actions
   print (fst (parseCoordinate "123,345"))
 
-  let grid = createGrid [action]
-  print grid
+  let grid = createGrid actions
+  -- print grid
+  print (length (filter id (elems grid)))
