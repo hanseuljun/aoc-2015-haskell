@@ -18,14 +18,26 @@ containsPairs :: String -> Bool
 containsPairs word =
   let wordPairs = pairs word
       wordPairPositions = positions wordPairs
-  in (containsPairPositions (Map.elems wordPairPositions))
+  in containsPairPositions (Map.elems wordPairPositions)
 
-main = do
-  -- content <- readFile "input5.txt"
-  -- let words = lines content
-  let word = "qjhvhtzxzqqjkmpb"
-      charPositions = positions word
+containsCharPositionPair :: [[Int]] -> Bool
+containsCharPositionPair pairs = any (\x -> (x !! 1 - x !! 0) == 2) pairs
+
+containsChars :: String -> Bool
+containsChars word =
+  let charPositions = positions word
       sortedCharPositions = map sort (Map.elems charPositions)
       sortedCharPositionPairs = map pairs sortedCharPositions
-  print (sortedCharPositions)
-  print (sortedCharPositionPairs)
+  in any containsCharPositionPair sortedCharPositionPairs
+
+
+main = do
+  content <- readFile "input5.txt"
+  let words = lines content
+      wordsWithPairs = filter (containsPairs) words
+      wordsWithChars = filter (containsChars) wordsWithPairs
+  print (length wordsWithChars)
+
+  -- let word = "uurcxstgmygtbstg"
+  -- print (containsPairs word)
+  -- print (containsChars word)
