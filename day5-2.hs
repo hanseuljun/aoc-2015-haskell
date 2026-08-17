@@ -11,11 +11,18 @@ pairs s =
 positions :: Ord a => [a] -> Map.Map a [Int]
 positions xs = Map.fromListWith (++) [(x, [i]) | (x, i) <- zip xs [0..]]
 
-main = do
-  content <- readFile "input5.txt"
-  let words = lines content
-      word = words !! 0
-      wordPairs = pairs word
+containsPairPositions :: [[Int]] -> Bool
+containsPairPositions positions = any (\x -> (maximum x - minimum x) > 1) positions
+
+containsPairs :: String -> Bool
+containsPairs word =
+  let wordPairs = pairs word
       wordPairPositions = positions wordPairs
-      wordPairPositionValues = Map.elems wordPairPositions
-  print wordPairPositionValues
+  in (containsPairPositions (Map.elems wordPairPositions))
+
+
+main = do
+  -- content <- readFile "input5.txt"
+  -- let words = lines content
+  let word = "qjhvhtzxzqqjkmpb"
+  print (containsPairs word)
