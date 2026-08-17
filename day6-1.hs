@@ -8,6 +8,8 @@ import Data.List.Split (splitOn)
 data ActionType = TurnOn | TurnOff | Toggle
   deriving (Show)
 
+type Coordinate = (Int, Int)
+
 data Action = Action ActionType Coordinate Coordinate
   deriving (Show)
 
@@ -17,22 +19,13 @@ typeOf (Action t _ _) = t
 startOf :: Action -> Coordinate
 startOf (Action _ s _) = s
 
-data Coordinate = Coordinate Int Int
-  deriving (Show)
-
-firstOf :: Coordinate -> Int
-firstOf (Coordinate x _) = x
-
-secondOf :: Coordinate -> Int
-secondOf (Coordinate _ y) = y
-
-tupleOf :: Coordinate -> (Int, Int)
-tupleOf (Coordinate x y) = (x, y)
+endOf :: Action -> Coordinate
+endOf (Action _ _ e) = e
 
 parseCoordinate :: String -> Coordinate
 parseCoordinate s = 
   let words = splitOn "," s
-  in Coordinate (read (words !! 0)) (read (words !! 1)) 
+  in (read (words !! 0), read (words !! 1)) 
 
 parseActionLine :: String -> Action
 parseActionLine line
@@ -44,15 +37,18 @@ parseActionLine line
     start = parseCoordinate (reverse lineWords !! 2)
     end = parseCoordinate (last lineWords)
 
+runFromStartToEnd :: Coordinate -> Coordinate -> (Coordinate -> ST s ()) -> ST s ()
+runFromStartToEnd start end f = do
+  forM_ ([fst start..fst end]) (\x -> forM_ ([fst start..fst end]) (\y -> f (x, y)))
+
 runAction :: STArray s (Int, Int) Bool -> Action -> ST s ()
 runAction arr action = do
   case typeOf action of
-    TurnOn -> writeArray arr (tupleOf (startOf action)) True
+    TurnOn -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray arr c True)
 
 createGrid :: [Action] -> Array (Int, Int) Bool
 createGrid actions = runSTArray $ do
   arr <- newArray ((0, 0), (5, 5)) False :: ST s (STArray s (Int, Int) Bool)
-  runAction arr (head actions)
   forM_ (actions) (\action -> runAction arr action) 
   return arr
 
@@ -65,7 +61,7 @@ main = do
       action = parseActionLine actionLine
   print actionLine
   print action
-  print (firstOf (parseCoordinate "123,345"))
+  print (fst (parseCoordinate "123,345"))
 
   let grid = createGrid [action]
   print grid
