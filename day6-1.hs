@@ -34,14 +34,14 @@ parseActionLine line
     start = parseCoordinate (reverse lineWords !! 2)
     end = parseCoordinate (last lineWords)
 
-runAction :: STArray s (Int, Int) Bool -> ST s ()
-runAction arr = do
+runAction :: STArray s (Int, Int) Bool -> Action -> ST s ()
+runAction arr action = do
   writeArray arr (1, 2) True
 
 createGrid :: [Action] -> Array (Int, Int) Bool
-createGrid action = runSTArray $ do
+createGrid actions = runSTArray $ do
   arr <- newArray ((0, 0), (5, 5)) False :: ST s (STArray s (Int, Int) Bool)
-  runAction arr
+  runAction arr (head actions)
   return arr
 
 main :: IO ()
