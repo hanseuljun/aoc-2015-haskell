@@ -1,11 +1,11 @@
-import Data.List (isInfixOf)
+import Data.List (isInfixOf, sort)
 import qualified Data.Map as Map
 
 main :: IO ()
 
-pairs :: String -> [String]
-pairs s =
-  let tuples = zip s (drop 1 s) :: [(Char, Char)]
+pairs :: [a] -> [[a]]
+pairs xs =
+  let tuples = zip xs (drop 1 xs)
   in map (\x -> [fst x, snd x]) tuples
 
 positions :: Ord a => [a] -> Map.Map a [Int]
@@ -20,9 +20,12 @@ containsPairs word =
       wordPairPositions = positions wordPairs
   in (containsPairPositions (Map.elems wordPairPositions))
 
-
 main = do
   -- content <- readFile "input5.txt"
   -- let words = lines content
   let word = "qjhvhtzxzqqjkmpb"
-  print (containsPairs word)
+      charPositions = positions word
+      sortedCharPositions = map sort (Map.elems charPositions)
+      sortedCharPositionPairs = map pairs sortedCharPositions
+  print (sortedCharPositions)
+  print (sortedCharPositionPairs)
