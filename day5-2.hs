@@ -3,10 +3,9 @@ import qualified Data.Map as Map
 
 main :: IO ()
 
-pairs :: [a] -> [[a]]
-pairs xs =
-  let tuples = zip xs (drop 1 xs)
-  in map (\x -> [fst x, snd x]) tuples
+-- list to list of pairs starting with (first element, second element)
+pairs :: [a] -> [(a, a)]
+pairs xs = zip xs (drop 1 xs)
 
 positions :: Ord a => [a] -> Map.Map a [Int]
 positions xs = Map.fromListWith (++) [(x, [i]) | (x, i) <- zip xs [0..]]
@@ -20,15 +19,14 @@ containsPairs word =
       wordPairPositions = positions wordPairs
   in containsPairPositions (Map.elems wordPairPositions)
 
-containsCharPositionPair :: [[Int]] -> Bool
-containsCharPositionPair pairs = any (\x -> (x !! 1 - x !! 0) == 2) pairs
+containsCharPosition :: [Int] -> Bool
+containsCharPosition positions = any (\x -> (x + 2) `elem` positions) positions
 
 containsChars :: String -> Bool
 containsChars word =
-  let charPositions = positions word
-      sortedCharPositions = map sort (Map.elems charPositions)
-      sortedCharPositionPairs = map pairs sortedCharPositions
-  in any containsCharPositionPair sortedCharPositionPairs
+  let charPositionsMap = positions word :: Map.Map Char [Int]
+      charPositions = Map.elems charPositionsMap
+  in any containsCharPosition charPositions
 
 
 main = do
@@ -37,7 +35,3 @@ main = do
       wordsWithPairs = filter (containsPairs) words
       wordsWithChars = filter (containsChars) wordsWithPairs
   print (length wordsWithChars)
-
-  -- let word = "uurcxstgmygtbstg"
-  -- print (containsPairs word)
-  -- print (containsChars word)
