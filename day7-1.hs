@@ -29,13 +29,13 @@ data Expression
   | ExpressionNot String
 
 evaluate :: (Map String Word16) -> Expression -> Word16
-evaluate map (ExpressionValue num) = num
-evaluate map (ExpressionString word) = read word :: Word16
-evaluate map (ExpressionAnd word1 word2) = (map Map.! word1) .&. (map Map.! word2)
-evaluate map (ExpressionOr word1 word2) = (map Map.! word1) .|. (map Map.! word2)
-evaluate map (ExpressionLShift word num) = (map Map.! word) `shiftL` num
-evaluate map (ExpressionRShift word num) = (map Map.! word) `shiftR` num
-evaluate map (ExpressionNot word) = complement (map Map.! word)
+evaluate expressionMap (ExpressionValue num) = num
+evaluate expressionMap (ExpressionString word) = read word :: Word16
+evaluate expressionMap (ExpressionAnd word1 word2) = (expressionMap Map.! word1) .&. (expressionMap Map.! word2)
+evaluate expressionMap (ExpressionOr word1 word2) = (expressionMap Map.! word1) .|. (expressionMap Map.! word2)
+evaluate expressionMap (ExpressionLShift word num) = (expressionMap Map.! word) `shiftL` num
+evaluate expressionMap (ExpressionRShift word num) = (expressionMap Map.! word) `shiftR` num
+evaluate expressionMap (ExpressionNot word) = complement (expressionMap Map.! word)
 
 parseExpressionString :: String -> Expression
 parseExpressionString expression =
@@ -48,26 +48,18 @@ parseExpressionString expression =
     [word1, "RSHIFT", word2] -> ExpressionRShift word1 (read word2 :: Int)
     ["NOT", word] -> ExpressionNot word
 
-evaluateString :: (Map String Word16) -> String -> Word16
-evaluateString map expressionString =
-  let expression = parseExpressionString expressionString
-  in evaluate map expression
-
 executeLine :: (Map String Word16) -> String -> Map String Word16
-executeLine map line =
+executeLine expressionMap line =
   let expressionStrings = splitOn "->" line
       leftExpressionString = expressionStrings !! 0
       rightExpressionString = expressionStrings !! 1
-      num = evaluateString map leftExpressionString
+      num = evaluate expressionMap (parseExpressionString leftExpressionString)
       var = trim rightExpressionString
-  in Map.insert var num map
+  in Map.insert var num expressionMap
 
 main :: IO ()
 main = do
-  let a = 0xFFFF :: Word16
-  print a
-  print (a + 1)
   let exampleLines = lines example
   print exampleLines
-  let map = foldl (executeLine) Map.empty exampleLines
-  print map
+  let expressionMap = foldl (executeLine) Map.empty exampleLines
+  print expressionMap
