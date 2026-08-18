@@ -37,17 +37,21 @@ evaluate map (ExpressionLShift word num) = (map Map.! word) `shiftL` num
 evaluate map (ExpressionRShift word num) = (map Map.! word) `shiftR` num
 evaluate map (ExpressionNot word) = complement (map Map.! word)
 
-evaluateString :: (Map String Word16) -> String -> Word16
-evaluateString map expression =
-  -- let expressionWords = traceWords (words expression)
+parseExpressionString :: String -> Expression
+parseExpressionString expression =
   let expressionWords = words expression
   in case expressionWords of
-    [word] -> evaluate map (ExpressionString word)
-    [word1, "AND", word2] -> evaluate map (ExpressionAnd word1 word2)
-    [word1, "OR", word2] -> evaluate map (ExpressionOr word1 word2)
-    [word1, "LSHIFT", word2] -> evaluate map (ExpressionLShift word1 (read word2 :: Int))
-    [word1, "RSHIFT", word2] -> evaluate map (ExpressionRShift word1 (read word2 :: Int))
-    ["NOT", word] -> evaluate map (ExpressionNot word)
+    [word] -> ExpressionString word
+    [word1, "AND", word2] -> ExpressionAnd word1 word2
+    [word1, "OR", word2] -> ExpressionOr word1 word2
+    [word1, "LSHIFT", word2] -> ExpressionLShift word1 (read word2 :: Int)
+    [word1, "RSHIFT", word2] -> ExpressionRShift word1 (read word2 :: Int)
+    ["NOT", word] -> ExpressionNot word
+
+evaluateString :: (Map String Word16) -> String -> Word16
+evaluateString map expressionString =
+  let expression = parseExpressionString expressionString
+  in evaluate map expression
 
 executeLine :: (Map String Word16) -> String -> Map String Word16
 executeLine map line =
