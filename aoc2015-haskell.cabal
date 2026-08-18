@@ -99,3 +99,8 @@ executable day6-1
     main-is:          day6-1.hs
     hs-source-dirs:   .
     build-depends:    base ^>=4.21.0.0, array, split
+
+executable day6-2
+    main-is:          day6-2.hs
+    hs-source-dirs:   .
+    build-depends:    base ^>=4.21.0.0, array, split
