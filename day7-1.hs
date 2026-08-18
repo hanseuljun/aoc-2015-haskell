@@ -7,18 +7,14 @@ import Debug.Trace (trace)
 import Data.Word (Word16)
 
 example :: String
--- example = "123 -> x\
---           \456 -> y\
---           \x AND y -> d\
---           \x OR y -> e\
---           \x LSHIFT 2 -> f\
---           \y RSHIFT 2 -> g\
---           \NOT x -> h\
---           \NOT y -> i"
-
 example = "123 -> x\n\
           \456 -> y\n\
-          \x AND y -> d"
+          \x AND y -> d\n\
+          \x OR y -> e\n\
+          \x LSHIFT 2 -> f\n\
+          \y RSHIFT 2 -> g\n\
+          \NOT x -> h\n\
+          \NOT y -> i"
 
 lookupOrRead :: (Map String Word16) -> String -> Word16
 lookupOrRead map word
@@ -30,12 +26,15 @@ traceWords xs = trace ("words: " ++ (show xs)) xs
 
 evaluate :: (Map String Word16) -> String -> Word16
 evaluate map expression =
-  let expressionWords = traceWords (words expression)
-  -- in read expression :: Word16
-  -- in read (expressionWords !! 0) :: Word16
+  -- let expressionWords = traceWords (words expression)
+  let expressionWords = words expression
   in case expressionWords of
     [word] -> read word :: Word16
-    [word1, "AND", word2] -> (lookupOrRead map word1) .&. (lookupOrRead map word2)
+    [word1, "AND", word2] -> (map Map.! word1) .&. (map Map.! word2)
+    [word1, "OR", word2] -> (map Map.! word1) .|. (map Map.! word2)
+    [word1, "LSHIFT", word2] -> (map Map.! word1) `shiftL` (read word2 :: Int)
+    [word1, "RSHIFT", word2] -> (map Map.! word1) `shiftR` (read word2 :: Int)
+    ["NOT", word] -> complement (map Map.! word)
 
 executeLine :: (Map String Word16) -> String -> Map String Word16
 executeLine map line =
