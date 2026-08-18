@@ -39,34 +39,43 @@ parseActionLine line
 
 runFromStartToEnd :: Coordinate -> Coordinate -> (Coordinate -> ST s ()) -> ST s ()
 runFromStartToEnd start end f = do
-  forM_ ([fst start..fst end]) (\x -> forM_ ([fst start..fst end]) (\y -> f (x, y)))
+  forM_ ([fst start..fst end]) (\x -> forM_ ([snd start..snd end]) (\y -> f (x, y)))
 
 runAction :: STArray s (Int, Int) Bool -> Action -> ST s ()
-runAction arr action = do
+runAction array action = do
   case typeOf action of
-    TurnOn -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray arr c True)
-    TurnOff -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray arr c False)
+    TurnOn -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray array c True)
+    TurnOff -> runFromStartToEnd (startOf action) (endOf action) (\c -> writeArray array c False)
     Toggle -> runFromStartToEnd (startOf action) (endOf action) (\c -> do
-                                                                    v <- readArray arr c
-                                                                    writeArray arr c (not v))
+                                                                    v <- readArray array c
+                                                                    writeArray array c (not v))
 
 createGrid :: [Action] -> Array (Int, Int) Bool
 createGrid actions = runSTArray $ do
-  arr <- newArray ((0, 0), (5, 5)) False :: ST s (STArray s (Int, Int) Bool)
-  forM_ (actions) (\action -> runAction arr action) 
-  return arr
+  array <- newArray ((0, 0), (999, 999)) False :: ST s (STArray s (Int, Int) Bool)
+  forM_ (actions) (\action -> runAction array action) 
+  return array
+
+count :: (Array (Int, Int) Bool) -> Int
+count array = length (filter id (elems array))
 
 main :: IO ()
 main = do
-  -- content <- readFile "input6.txt"
-  let content = "turn on 1,1 through 2,2\ntoggle 1,1 through 3,3"
+  content <- readFile "input6.txt"
+  -- let content = "turn on 1,1 through 2,2\ntoggle 1,1 through 3,3"
+  -- let content = "toggle 461,550 through 564,900"
+  -- let content = "toggle 4,5 through 5,9"
+  -- let content = "turn on 4,5 through 5,9"
   let actionLines = lines content
       actions = map parseActionLine actionLines
       action = actions !! 0
   print actionLines
   print actions
+  print (typeOf action)
+  print (startOf action)
+  print (endOf action)
   print (fst (parseCoordinate "123,345"))
 
   let grid = createGrid actions
   -- print grid
-  print (length (filter id (elems grid)))
+  print (count grid)
