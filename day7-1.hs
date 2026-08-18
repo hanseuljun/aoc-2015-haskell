@@ -3,8 +3,9 @@ import Data.List.Extra (trim)
 import Data.List.Split (splitOn)
 import qualified Data.Map as Map
 import Data.Map (Map)
-import Debug.Trace (trace)
 import Data.Word (Word16)
+import Debug.Trace (trace)
+import Text.Read (readMaybe)
 
 example :: String
 example = "123 -> x\n\
@@ -58,6 +59,19 @@ executeLine expressionMap line =
       var = trim rightExpressionString
   in Map.insert var num expressionMap
 
+
+getValue :: Map String Expression -> String -> Word16
+getValue expressionMap var =
+  let mapValue = expressionMap Map.! var :: Expression
+  in case mapValue of
+    ExpressionValue num -> num
+    ExpressionString word -> maybe (getValue expressionMap word) id (readMaybe word :: Maybe Word16)
+    ExpressionAnd word1 word2 -> (getValue expressionMap word1) .&. (getValue expressionMap word2)
+    ExpressionOr word1 word2 -> (getValue expressionMap word1) .|. (getValue expressionMap word2)
+    ExpressionLShift word num -> (getValue expressionMap word) `shiftL` num
+    ExpressionRShift word num -> (getValue expressionMap word) `shiftR` num
+    ExpressionNot word -> complement (getValue expressionMap word)
+
 parseLine :: String -> (String, Expression)
 parseLine line =
   let expressionStrings = splitOn "->" line
@@ -74,5 +88,13 @@ main = do
   print contentLines
   let expressionMap = Map.fromList (map parseLine contentLines)
   print expressionMap
+  print (getValue expressionMap "g")
   let evaluatedExpressionMap = foldl (executeLine) Map.empty contentLines
   print evaluatedExpressionMap
+
+  -- content <- readFile "input7.txt"
+  -- let contentLines = lines content
+  -- print contentLines
+  -- let expressionMap = Map.fromList (map parseLine contentLines)
+  -- print expressionMap
+  -- print (getValue expressionMap "a")
