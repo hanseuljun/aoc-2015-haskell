@@ -104,3 +104,8 @@ executable day6-2
     main-is:          day6-2.hs
     hs-source-dirs:   .
     build-depends:    base ^>=4.21.0.0, array, split
+
+executable day7-1
+    main-is:          day7-1.hs
+    hs-source-dirs:   .
+    build-depends:    base ^>=4.21.0.0, containers, split
