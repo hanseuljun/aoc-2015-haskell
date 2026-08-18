@@ -16,33 +16,46 @@ example = "123 -> x\n\
           \NOT x -> h\n\
           \NOT y -> i"
 
-lookupOrRead :: (Map String Word16) -> String -> Word16
-lookupOrRead map word
-  | Map.member word map = map Map.! word
-  | otherwise = read word :: Word16
-
 traceWords :: [String] -> [String]
 traceWords xs = trace ("words: " ++ (show xs)) xs
 
-evaluate :: (Map String Word16) -> String -> Word16
-evaluate map expression =
+data Expression
+  = ExpressionValue Word16
+  | ExpressionString String
+  | ExpressionAnd String String
+  | ExpressionOr String String
+  | ExpressionLShift String Int
+  | ExpressionRShift String Int
+  | ExpressionNot String
+
+evaluate :: (Map String Word16) -> Expression -> Word16
+evaluate map (ExpressionValue num) = num
+evaluate map (ExpressionString word) = read word :: Word16
+evaluate map (ExpressionAnd word1 word2) = (map Map.! word1) .&. (map Map.! word2)
+evaluate map (ExpressionOr word1 word2) = (map Map.! word1) .|. (map Map.! word2)
+evaluate map (ExpressionLShift word num) = (map Map.! word) `shiftL` num
+evaluate map (ExpressionRShift word num) = (map Map.! word) `shiftR` num
+evaluate map (ExpressionNot word) = complement (map Map.! word)
+
+evaluateString :: (Map String Word16) -> String -> Word16
+evaluateString map expression =
   -- let expressionWords = traceWords (words expression)
   let expressionWords = words expression
   in case expressionWords of
-    [word] -> read word :: Word16
-    [word1, "AND", word2] -> (map Map.! word1) .&. (map Map.! word2)
-    [word1, "OR", word2] -> (map Map.! word1) .|. (map Map.! word2)
-    [word1, "LSHIFT", word2] -> (map Map.! word1) `shiftL` (read word2 :: Int)
-    [word1, "RSHIFT", word2] -> (map Map.! word1) `shiftR` (read word2 :: Int)
-    ["NOT", word] -> complement (map Map.! word)
+    [word] -> evaluate map (ExpressionString word)
+    [word1, "AND", word2] -> evaluate map (ExpressionAnd word1 word2)
+    [word1, "OR", word2] -> evaluate map (ExpressionOr word1 word2)
+    [word1, "LSHIFT", word2] -> evaluate map (ExpressionLShift word1 (read word2 :: Int))
+    [word1, "RSHIFT", word2] -> evaluate map (ExpressionRShift word1 (read word2 :: Int))
+    ["NOT", word] -> evaluate map (ExpressionNot word)
 
 executeLine :: (Map String Word16) -> String -> Map String Word16
 executeLine map line =
-  let expressions = splitOn "->" line
-      leftExpression = expressions !! 0
-      rightExpression = expressions !! 1
-      num = evaluate map leftExpression
-      var = trim rightExpression
+  let expressionStrings = splitOn "->" line
+      leftExpressionString = expressionStrings !! 0
+      rightExpressionString = expressionStrings !! 1
+      num = evaluateString map leftExpressionString
+      var = trim rightExpressionString
   in Map.insert var num map
 
 main :: IO ()
