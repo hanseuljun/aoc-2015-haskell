@@ -27,8 +27,9 @@ data Expression
   | ExpressionLShift String Int
   | ExpressionRShift String Int
   | ExpressionNot String
+  deriving (Show)
 
-evaluate :: (Map String Word16) -> Expression -> Word16
+evaluate :: Map String Word16 -> Expression -> Word16
 evaluate expressionMap (ExpressionValue num) = num
 evaluate expressionMap (ExpressionString word) = read word :: Word16
 evaluate expressionMap (ExpressionAnd word1 word2) = (expressionMap Map.! word1) .&. (expressionMap Map.! word2)
@@ -48,7 +49,7 @@ parseExpressionString expression =
     [word1, "RSHIFT", word2] -> ExpressionRShift word1 (read word2 :: Int)
     ["NOT", word] -> ExpressionNot word
 
-executeLine :: (Map String Word16) -> String -> Map String Word16
+executeLine :: Map String Word16 -> String -> Map String Word16
 executeLine expressionMap line =
   let expressionStrings = splitOn "->" line
       leftExpressionString = expressionStrings !! 0
@@ -57,9 +58,21 @@ executeLine expressionMap line =
       var = trim rightExpressionString
   in Map.insert var num expressionMap
 
+parseLine :: String -> (String, Expression)
+parseLine line =
+  let expressionStrings = splitOn "->" line
+      leftExpressionString = expressionStrings !! 0
+      rightExpressionString = expressionStrings !! 1
+      leftExpression = parseExpressionString leftExpressionString
+      var = trim rightExpressionString
+  in (var, leftExpression)
+
 main :: IO ()
 main = do
-  let exampleLines = lines example
-  print exampleLines
-  let expressionMap = foldl (executeLine) Map.empty exampleLines
+  let content = example
+  let contentLines = lines content
+  print contentLines
+  let expressionMap = Map.fromList (map parseLine contentLines)
   print expressionMap
+  let evaluatedExpressionMap = foldl (executeLine) Map.empty contentLines
+  print evaluatedExpressionMap
