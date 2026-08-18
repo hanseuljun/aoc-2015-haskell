@@ -1,4 +1,5 @@
 import Data.Bits
+import Data.List.Extra (trim)
 import Data.List.Split (splitOn)
 import qualified Data.Map as Map
 import Data.Map (Map)
@@ -14,22 +15,24 @@ example :: String
 --           \NOT x -> h\
 --           \NOT y -> i"
 
-example = "123 -> x"
+example = "123 -> x\n\
+          \456 -> y"
 
 executeLine :: (Map String Word16) -> String -> Map String Word16
-executeLine variables line =
+executeLine map line =
   let expressions = splitOn "->" line
       leftExpression = expressions !! 0
       rightExpression = expressions !! 1
       num = read leftExpression :: Word16
-      var = rightExpression
-  in Map.insert var num variables
+      var = trim rightExpression
+  in Map.insert var num map
 
 main :: IO ()
 main = do
   let a = 0xFFFF :: Word16
   print a
   print (a + 1)
-  let variables1 = Map.empty :: Map String Word16
-  let variables2 = executeLine variables1 example
-  print variables2
+  let exampleLines = lines example
+  print exampleLines
+  let map = foldl (executeLine) Map.empty exampleLines
+  print map
