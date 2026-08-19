@@ -17,29 +17,31 @@ example = "123 -> x\n\
           \NOT x -> h\n\
           \NOT y -> i"
 
-traceWords :: [String] -> [String]
-traceWords xs = trace ("words: " ++ (show xs)) xs
+type Term = Either Word16 String
+parseTerm :: String -> Term
+parseTerm s = case readMaybe s of
+  Just n -> Left n
+  Nothing -> Right s
 
 data Expression
-  = ExpressionValue Word16
-  | ExpressionString String
-  | ExpressionAnd String String
-  | ExpressionOr String String
-  | ExpressionLShift String Int
-  | ExpressionRShift String Int
-  | ExpressionNot String
+  = ExpressionTerm Term
+  | ExpressionAnd Term Term
+  | ExpressionOr Term Term
+  | ExpressionLShift Term Int
+  | ExpressionRShift Term Int
+  | ExpressionNot Term
   deriving (Show)
 
 parseExpressionString :: String -> Expression
 parseExpressionString expression =
-  let expressionWords = words expression
-  in case expressionWords of
-    [word] -> ExpressionString word
-    [word1, "AND", word2] -> ExpressionAnd word1 word2
-    [word1, "OR", word2] -> ExpressionOr word1 word2
-    [word1, "LSHIFT", word2] -> ExpressionLShift word1 (read word2 :: Int)
-    [word1, "RSHIFT", word2] -> ExpressionRShift word1 (read word2 :: Int)
-    ["NOT", word] -> ExpressionNot word
+  let strs = words expression
+  in case strs of
+    [str] -> ExpressionTerm (parseTerm str)
+    [leftStr, "AND", rightStr] -> ExpressionAnd (parseTerm leftStr) (parseTerm rightStr)
+    [leftStr, "OR", rightStr] -> ExpressionOr (parseTerm leftStr) (parseTerm rightStr)
+    [leftStr, "LSHIFT", rightStr] -> ExpressionLShift (parseTerm leftStr) (read rightStr :: Int)
+    [leftStr, "RSHIFT", rightStr] -> ExpressionRShift (parseTerm leftStr) (read rightStr :: Int)
+    ["NOT", str] -> ExpressionNot (parseTerm str)
 
 parseLine :: String -> (String, Expression)
 parseLine line =
@@ -53,31 +55,52 @@ parseLine line =
 traceExpression :: Expression -> Expression
 traceExpression e = trace (show e) e
 
-getValue :: Map String Expression -> String -> Word16
-getValue expressionMap var =
-  -- let mapValue = expressionMap Map.! var :: Expression
-  let mapValue = traceExpression (expressionMap Map.! var :: Expression)
-  in case mapValue of
-    ExpressionValue num -> num
-    ExpressionString word -> maybe (getValue expressionMap word) id (readMaybe word :: Maybe Word16)
-    ExpressionAnd word1 word2 -> (getValue expressionMap word1) .&. (getValue expressionMap word2)
-    ExpressionOr word1 word2 -> (getValue expressionMap word1) .|. (getValue expressionMap word2)
-    ExpressionLShift word num -> (getValue expressionMap word) `shiftL` num
-    ExpressionRShift word num -> (getValue expressionMap word) `shiftR` num
-    ExpressionNot word -> complement (getValue expressionMap word)
+evaluateString :: Map String Expression -> String -> (Map String Expression, Word16)
+evaluateString expressionMap str =
+  -- let value = expressionMap Map.! str :: Expression
+  let value = traceExpression (expressionMap Map.! str :: Expression)
+  in case value of
+    ExpressionTerm term -> evaluateTerm expressionMap term
+    ExpressionAnd leftTerm rightTerm ->
+      let leftPair = evaluateTerm expressionMap leftTerm
+          rightPair = evaluateTerm (fst leftPair) rightTerm
+          result = (snd leftPair) .&. (snd rightPair) 
+      in ((fst rightPair), result)
+    ExpressionOr leftTerm rightTerm ->
+      let leftPair = evaluateTerm expressionMap leftTerm
+          rightPair = evaluateTerm (fst leftPair) rightTerm
+          result = (snd leftPair) .|. (snd rightPair) 
+      in ((fst rightPair), result)
+    ExpressionLShift term num ->
+      let pair = evaluateTerm expressionMap term
+          result = (snd pair) `shiftL` num
+      in ((fst pair), result)
+    ExpressionRShift term num ->
+      let pair = evaluateTerm expressionMap term
+          result = (snd pair) `shiftR` num
+      in ((fst pair), result)
+    ExpressionNot term ->
+      let pair = evaluateTerm expressionMap term
+          result = complement (snd pair)
+      in ((fst pair), result)
+
+evaluateTerm :: Map String Expression -> Term -> (Map String Expression, Word16)
+evaluateTerm expressionMap term = case term of
+  Left n -> (expressionMap, n)
+  Right s -> evaluateString expressionMap s
 
 main :: IO ()
 main = do
-  -- let content = example
-  -- let contentLines = lines content
-  -- print contentLines
-  -- let expressionMap = Map.fromList (map parseLine contentLines)
-  -- print expressionMap
-  -- print (getValue expressionMap "e")
-
-  content <- readFile "input7.txt"
+  let content = example
   let contentLines = lines content
   print contentLines
   let expressionMap = Map.fromList (map parseLine contentLines)
   print expressionMap
-  print (getValue expressionMap "a")
+  print (evaluateString expressionMap "e")
+
+  -- content <- readFile "input7.txt"
+  -- let contentLines = lines content
+  -- print contentLines
+  -- let expressionMap = Map.fromList (map parseLine contentLines)
+  -- print expressionMap
+  -- print (evaluateString expressionMap "a")
