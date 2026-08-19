@@ -65,24 +65,24 @@ evaluateString expressionMap str =
       let (leftMap, leftValue) = evaluateTerm expressionMap leftTerm
           (rightMap, rightValue) = evaluateTerm leftMap rightTerm
           result = leftValue .&. rightValue
-      in (rightMap, result)
+      in (Map.insert str (ExpressionTerm (Left result)) rightMap, result)
     ExpressionOr leftTerm rightTerm ->
       let (leftMap, leftValue) = evaluateTerm expressionMap leftTerm
           (rightMap, rightValue) = evaluateTerm leftMap rightTerm
           result = leftValue .|. rightValue
-      in (rightMap, result)
+      in (Map.insert str (ExpressionTerm (Left result)) rightMap, result)
     ExpressionLShift term num ->
       let (map, value) = evaluateTerm expressionMap term
           result = value `shiftL` num
-      in (map, result)
+      in (Map.insert str (ExpressionTerm (Left result)) map, result)
     ExpressionRShift term num ->
       let (map, value) = evaluateTerm expressionMap term
           result = value `shiftR` num
-      in (map, result)
+      in (Map.insert str (ExpressionTerm (Left result)) map, result)
     ExpressionNot term ->
       let (map, value) = evaluateTerm expressionMap term
           result = complement value
-      in (map, result)
+      in (Map.insert str (ExpressionTerm (Left result)) map, result)
 
 evaluateTerm :: Map String Expression -> Term -> (Map String Expression, Word16)
 evaluateTerm expressionMap term = case term of
@@ -91,16 +91,16 @@ evaluateTerm expressionMap term = case term of
 
 main :: IO ()
 main = do
-  let content = example
-  let contentLines = lines content
-  print contentLines
-  let expressionMap = Map.fromList (map parseLine contentLines)
-  print expressionMap
-  print (evaluateString expressionMap "e")
-
-  -- content <- readFile "input7.txt"
+  -- let content = example
   -- let contentLines = lines content
   -- print contentLines
   -- let expressionMap = Map.fromList (map parseLine contentLines)
   -- print expressionMap
-  -- print (evaluateString expressionMap "a")
+  -- print (evaluateString expressionMap "e")
+
+  content <- readFile "input7.txt"
+  let contentLines = lines content
+  print contentLines
+  let expressionMap = Map.fromList (map parseLine contentLines)
+  print expressionMap
+  print (evaluateString expressionMap "a")
