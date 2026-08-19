@@ -62,27 +62,27 @@ evaluateString expressionMap str =
   in case value of
     ExpressionTerm term -> evaluateTerm expressionMap term
     ExpressionAnd leftTerm rightTerm ->
-      let leftPair = evaluateTerm expressionMap leftTerm
-          rightPair = evaluateTerm (fst leftPair) rightTerm
-          result = (snd leftPair) .&. (snd rightPair) 
-      in ((fst rightPair), result)
+      let (leftMap, leftValue) = evaluateTerm expressionMap leftTerm
+          (rightMap, rightValue) = evaluateTerm leftMap rightTerm
+          result = leftValue .&. rightValue
+      in (rightMap, result)
     ExpressionOr leftTerm rightTerm ->
-      let leftPair = evaluateTerm expressionMap leftTerm
-          rightPair = evaluateTerm (fst leftPair) rightTerm
-          result = (snd leftPair) .|. (snd rightPair) 
-      in ((fst rightPair), result)
+      let (leftMap, leftValue) = evaluateTerm expressionMap leftTerm
+          (rightMap, rightValue) = evaluateTerm leftMap rightTerm
+          result = leftValue .|. rightValue
+      in (rightMap, result)
     ExpressionLShift term num ->
-      let pair = evaluateTerm expressionMap term
-          result = (snd pair) `shiftL` num
-      in ((fst pair), result)
+      let (map, value) = evaluateTerm expressionMap term
+          result = value `shiftL` num
+      in (map, result)
     ExpressionRShift term num ->
-      let pair = evaluateTerm expressionMap term
-          result = (snd pair) `shiftR` num
-      in ((fst pair), result)
+      let (map, value) = evaluateTerm expressionMap term
+          result = value `shiftR` num
+      in (map, result)
     ExpressionNot term ->
-      let pair = evaluateTerm expressionMap term
-          result = complement (snd pair)
-      in ((fst pair), result)
+      let (map, value) = evaluateTerm expressionMap term
+          result = complement value
+      in (map, result)
 
 evaluateTerm :: Map String Expression -> Term -> (Map String Expression, Word16)
 evaluateTerm expressionMap term = case term of
